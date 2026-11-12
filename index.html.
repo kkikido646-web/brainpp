@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BRAINPP</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#10101b;color:white;font-family:Arial,sans-serif}
+header{padding:22px;text-align:center;background:#19192b}
+h1{color:#a879ff;margin:0;font-size:32px}
+nav{display:flex;justify-content:space-around;background:#22223a;padding:12px;position:sticky;top:0}
+button{border:0;border-radius:12px;padding:12px;background:#8255df;color:white;font-weight:bold}
+nav button{background:transparent}
+main{padding:16px;max-width:600px;margin:auto}
+.panel{background:#202039;padding:16px;border-radius:16px;margin:14px 0}
+.balance{font-size:22px;color:#ffd45c;text-align:center}
+.case{display:inline-block;width:47%;margin:1%;padding:15px 5px;background:#292944;border-radius:14px;text-align:center}
+.case .pic{font-size:48px}
+.case button{width:100%;margin-top:10px}
+.item{display:flex;justify-content:space-between;align-items:center;padding:12px;background:#292944;border-radius:12px;margin:8px 0}
+.small{color:#bbb;font-size:13px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<header><h1>🧠 BRAINPP</h1><p>Собери свою коллекцию Брейнротов!</p></header>
+<nav>
+<button onclick="show('home')">🏠 Главная</button>
+<button onclick="show('collection')">🎒 Коллекция</button>
+<button onclick="show('profile')">👤 Профиль</button>
+</nav>
+<main>
+<div class="panel balance">🪙 Баланс: <span id="coins">0</span></div>
+
+<section id="home">
+<h2>🎁 Магазин кейсов</h2>
+<div id="cases"></div>
+<div class="panel">
+<h3>🎉 Результат открытия</h3>
+<div id="result">Открой кейс!</div>
+</div>
+</section>
+
+<section id="collection" class="hidden">
+<h2>🎒 Моя коллекция</h2>
+<div id="items"></div>
+</section>
+
+<section id="profile" class="hidden">
+<h2>👤 Профиль</h2>
+<div class="panel">
+<p>Игра: BRAINPP</p>
+<p>Баланс: <span id="profileCoins">0</span> монет</p>
+<p>Брейнротов собрано: <span id="count">0</span></p>
+</div>
+</section>
+</main>
+
+<script>
+let coins=Number(localStorage.getItem('brainpp_coins')||0);
+let collection=JSON.parse(localStorage.getItem('brainpp_collection')||'[]');
+
+const brainrots=[
+{name:'Tralalero Tralala',emoji:'🦈',price:150,weight:35},
+{name:'Bombardiro Crocodilo',emoji:'🐊',price:300,weight:25},
+{name:'Ballerina Cappuccina',emoji:'☕',price:500,weight:18},
+{name:'Tung Tung Tung Sahur',emoji:'🪵',price:800,weight:12},
+{name:'Cappuccino Assassino',emoji:'🥷',price:1500,weight:8},
+{name:'Dragon Brainrot',emoji:'🐉',price:5000,weight:2}
+];
+
+const cases=[
+{name:'Обычный кейс',price:100,emoji:'📦'},
+{name:'Редкий кейс',price:300,emoji:'💎'},
+{name:'Легендарный кейс',price:600,emoji:'👑'},
+{name:'Секретный кейс',price:500,emoji:'🐉'}
+];
+
+function save(){
+localStorage.setItem('brainpp_coins',coins);
+localStorage.setItem('brainpp_collection',JSON.stringify(collection));
+update();
+}
+
+function update(){
+document.getElementById('coins').textContent=coins;
+document.getElementById('profileCoins').textContent=coins;
+document.getElementById('count').textContent=collection.length;
+renderCollection();
+}
+
+function show(id){
+['home','collection','profile'].forEach(x=>
+document.getElementById(x).classList.toggle('hidden',x!==id));
+}
+
+function renderCases(){
+document.getElementById('cases').innerHTML=cases.map((c,i)=>`
+<div class="case">
+<div class="pic">${c.emoji}</div>
+<b>${c.name}</b>
+<p>🪙 ${c.price}</p>
+<button onclick="openCase(${i})">Открыть</button>
+</div>`).join('');
+}
+
+function openCase(index){
+let c=cases[index];
+if(coins<c.price){
+alert('Недостаточно монет!');
+return;
+}
+coins-=c.price;
+let pool=brainrots;
+let total=pool.reduce((s,b)=>s+b.weight,0);
+let r=Math.random()*total;
+let chosen=pool[0];
+for(let b of pool){
+r-=b.weight;
+if(r<=0){chosen=b;break;}
+}
+collection.push({...chosen,id:Date.now()+Math.random()});
+document.getElementById('result').innerHTML=
+`<h2>${chosen.emoji} ${chosen.name}</h2><p>Цена продажи: ${chosen.price} монет</p>`;
+save();
+}
+
+function renderCollection(){
+let el=document.getElementById('items');
+if(!collection.length){
+el.innerHTML='<p>Коллекция пока пуста. Открой первый кейс!</p>';
+return;
+}
+el.innerHTML=collection.map((b,i)=>`
+<div class="item">
+<div>${b.emoji} <b>${b.name}</b><div class="small">Цена: ${b.price} монет</div></div>
+<button onclick="sell(${i})">Продать</button>
+</div>`).join('');
+}
+
+function sell(i){
+let b=collection[i];
+coins+=b.price;
+collection.splice(i,1);
+save();
+}
+
+renderCases();
+update();
+</script>
+</body>
+</html>
